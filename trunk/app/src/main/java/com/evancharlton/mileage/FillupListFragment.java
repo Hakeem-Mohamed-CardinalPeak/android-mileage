@@ -7,7 +7,6 @@ import com.evancharlton.mileage.provider.tables.FillupsTable;
 import com.evancharlton.mileage.services.RecalculateEconomyService;
 import com.evancharlton.mileage.views.CursorSpinner;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.BroadcastReceiver;
@@ -21,15 +20,23 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ListView;
 
-public class FillupListActivity extends Activity {
-    private static final String TAG = "FillupListActivity";
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+
+public class FillupListFragment extends Fragment {
+    private static final String TAG = "FillupListFragment";
+
+    private static final int MENU_EDIT = Menu.FIRST;
+    private static final int MENU_DELETE = Menu.FIRST + 1;
 
     private CursorSpinner mVehicles;
 
@@ -48,29 +55,34 @@ public class FillupListActivity extends Activity {
     };
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.fillup_list);
-
-        initUI();
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.fillup_list, container, false);
     }
 
     @Override
-    protected void onResume() {
+    public void onViewCreated(View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        initUI(view);
+    }
+
+    @Override
+    public void onResume() {
         mAdapter.requery();
         super.onResume();
-        registerReceiver(mCalculationFinishedReceiver, new IntentFilter(
-                RecalculateEconomyService.CALCULATION_FINISHED));
+        ContextCompat.registerReceiver(requireContext(), mCalculationFinishedReceiver,
+                new IntentFilter(RecalculateEconomyService.CALCULATION_FINISHED),
+                ContextCompat.RECEIVER_NOT_EXPORTED);
     }
 
     @Override
-    protected void onPause() {
-        unregisterReceiver(mCalculationFinishedReceiver);
+    public void onPause() {
+        requireContext().unregisterReceiver(mCalculationFinishedReceiver);
         super.onPause();
     }
 
-    protected void initUI() {
-        mVehicles = (CursorSpinner) findViewById(R.id.vehicle);
+    protected void initUI(View view) {
+        mVehicles = view.findViewById(R.id.vehicle);
         mVehicles.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> list, View row, int position, long id) {
@@ -90,8 +102,8 @@ public class FillupListActivity extends Activity {
 
         mVehicle = getVehicle();
 
-        mAdapter = new FillupAdapter(this, getVehicle());
-        mList = (ListView) findViewById(android.R.id.list);
+        mAdapter = new FillupAdapter(requireContext(), getVehicle());
+        mList = view.findViewById(android.R.id.list);
         mList.setAdapter(mAdapter);
         registerForContextMenu(mList);
         mList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -108,33 +120,32 @@ public class FillupListActivity extends Activity {
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
 
-        menu.add(Menu.NONE, R.string.edit, Menu.NONE, R.string.edit);
-        menu.add(Menu.NONE, R.string.delete, Menu.NONE, R.string.delete);
+        menu.add(Menu.NONE, MENU_EDIT, Menu.NONE, R.string.edit);
+        menu.add(Menu.NONE, MENU_DELETE, Menu.NONE, R.string.delete);
     }
 
     @Override
     public boolean onContextItemSelected(MenuItem item) {
         AdapterView.AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
-        switch (item.getItemId()) {
-            case R.string.edit:
-                editFillup(info.id);
-                return true;
-            case R.string.delete:
-                showDeleteDialog(info.id);
-                return true;
-            default:
-                return super.onContextItemSelected(item);
+        int id = item.getItemId();
+        if (id == MENU_EDIT) {
+            editFillup(info.id);
+            return true;
+        } else if (id == MENU_DELETE) {
+            showDeleteDialog(info.id);
+            return true;
         }
+        return super.onContextItemSelected(item);
     }
 
     private void openFillup(long id) {
-        Intent intent = new Intent(this, FillupInfoActivity.class);
+        Intent intent = new Intent(requireContext(), FillupInfoActivity.class);
         intent.putExtra(BaseFormActivity.EXTRA_ITEM_ID, id);
         startActivity(intent);
     }
 
     private void editFillup(long id) {
-        Intent intent = new Intent(this, FillupActivity.class);
+        Intent intent = new Intent(requireContext(), FillupActivity.class);
         intent.putExtra(BaseFormActivity.EXTRA_ITEM_ID, id);
         startActivity(intent);
     }
@@ -144,7 +155,7 @@ public class FillupListActivity extends Activity {
             @Override
             public void run() {
                 Uri uri = ContentUris.withAppendedId(FillupsTable.BASE_URI, id);
-                getContentResolver().delete(uri, null, null);
+                requireContext().getContentResolver().delete(uri, null, null);
             }
         });
     }
@@ -152,7 +163,7 @@ public class FillupListActivity extends Activity {
     protected void showDeleteDialog(final Runnable deleteAction) {
         // TODO(3.1) - This dialog doesn't persist through rotations.
         Dialog deleteDialog =
-                new AlertDialog.Builder(this)
+                new AlertDialog.Builder(requireContext())
                         .setTitle(R.string.dialog_title_delete)
                         .setMessage(R.string.dialog_message_delete)
                         .setPositiveButton(android.R.string.yes,
@@ -174,11 +185,11 @@ public class FillupListActivity extends Activity {
     }
 
     private void calculate() {
-        RecalculateEconomyService.run(this, mVehicle);
+        RecalculateEconomyService.run(requireContext(), mVehicle);
     }
 
     protected final Vehicle getVehicle() {
-        Vehicle vehicle = Vehicle.loadById(this, mVehicles.getSelectedItemId());
+        Vehicle vehicle = Vehicle.loadById(requireContext(), mVehicles.getSelectedItemId());
         if (vehicle == null) {
             Log.e(TAG, "Unable to load vehicle #" + mVehicles.getSelectedItemId());
             throw new IllegalStateException("Unable to load vehicle #"

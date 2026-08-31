@@ -1,9 +1,9 @@
 
 package com.evancharlton.mileage.io.importers;
 
+import com.evancharlton.mileage.BaseActivity;
 import com.evancharlton.mileage.R;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
@@ -11,7 +11,7 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-public abstract class CsvWizardActivity extends Activity implements View.OnClickListener {
+public abstract class CsvWizardActivity extends BaseActivity implements View.OnClickListener {
     protected static final int REQUEST_NEXT = 0;
     protected static final int FINISH = 1;
     protected static final int PREVIOUS = 2;
@@ -26,6 +26,7 @@ public abstract class CsvWizardActivity extends Activity implements View.OnClick
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.wizard);
+        initToolbar();
 
         mContainer = (LinearLayout) findViewById(R.id.container);
 

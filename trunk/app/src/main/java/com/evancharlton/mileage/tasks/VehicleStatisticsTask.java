@@ -1,7 +1,7 @@
 
 package com.evancharlton.mileage.tasks;
 
-import com.evancharlton.mileage.VehicleStatisticsActivity;
+import com.evancharlton.mileage.VehicleStatisticsFragment;
 import com.evancharlton.mileage.dao.CachedValue;
 import com.evancharlton.mileage.dao.Fillup;
 import com.evancharlton.mileage.dao.FillupSeries;
@@ -18,7 +18,7 @@ import android.database.Cursor;
 import android.util.Log;
 
 public class VehicleStatisticsTask extends
-        AttachableAsyncTask<VehicleStatisticsActivity, Cursor, Integer, Integer> {
+        AttachableAsyncTask<VehicleStatisticsFragment, Cursor, Integer, Integer> {
     private static final String TAG = "VehicleStatisticsTask";
 
     private ContentResolver mContentResolver;
@@ -28,9 +28,9 @@ public class VehicleStatisticsTask extends
     private int mTotal = 0;
 
     @Override
-    public void attach(VehicleStatisticsActivity activity) {
-        super.attach(activity);
-        mContentResolver = activity.getContentResolver();
+    public void attach(VehicleStatisticsFragment fragment) {
+        super.attach(fragment);
+        mContentResolver = fragment.requireContext().getContentResolver();
     }
 
     @Override
@@ -303,7 +303,7 @@ public class VehicleStatisticsTask extends
                 update(Statistics.AVG_YEARLY_COST, costPerDay * 365);
 
                 try {
-                    fillup.saveIfChanged(getParent());
+                    fillup.saveIfChanged(getParent().requireContext());
                 } catch (InvalidFieldException e) {
                     Log.e(TAG, "Couldn't save in-memory changes.", e);
                 }

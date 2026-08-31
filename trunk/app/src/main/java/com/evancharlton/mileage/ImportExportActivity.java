@@ -8,12 +8,13 @@ import android.os.Environment;
 import android.view.View;
 import android.widget.Toast;
 
-public class ImportExportActivity extends Activity {
+public class ImportExportActivity extends BaseActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.import_export);
+        initToolbar();
 
         map(R.id.import_button, ImportActivity.class);
         map(R.id.export_button, ExportActivity.class);

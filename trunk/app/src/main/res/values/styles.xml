@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme" parent="android:Theme">
+    <style name="AppTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+    </style>
+    <style name="AppTheme.Dialog" parent="Theme.MaterialComponents.DayNight.Dialog">
     </style>
     <style name="StatisticText">
 		<item name="android:textAppearance">?android:attr/textAppearanceLarge</item>

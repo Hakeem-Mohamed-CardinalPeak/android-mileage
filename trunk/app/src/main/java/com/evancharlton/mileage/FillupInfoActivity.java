@@ -32,7 +32,7 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-public class FillupInfoActivity extends Activity implements View.OnClickListener {
+public class FillupInfoActivity extends BaseActivity implements View.OnClickListener {
     private static final String TAG = "FillupInfoActivity";
 
     private static final Statistic[] INFO = {
@@ -69,6 +69,7 @@ public class FillupInfoActivity extends Activity implements View.OnClickListener
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.fillup_info);
+        initToolbar();
 
         mInflater = LayoutInflater.from(this);
 

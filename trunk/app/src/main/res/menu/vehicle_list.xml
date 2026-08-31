@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/menu_add_vehicle"
+        android:icon="@drawable/ic_menu_add"
+        android:title="@string/add_vehicle"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_edit_vehicle_types"
+        android:icon="@drawable/ic_menu_edit"
+        android:title="@string/edit_vehicle_types"
+        app:showAsAction="never" />
+</menu>

@@ -71,12 +71,12 @@ public class CsvVehicleMappingActivity extends CsvWizardActivity {
     }
 
     @Override
-    public Object onRetainNonConfigurationInstance() {
+    public Object onRetainCustomNonConfigurationInstance() {
         return mVehicleReaderTask;
     }
 
     private void restoreTask() {
-        mVehicleReaderTask = (CsvVehicleReaderTask) getLastNonConfigurationInstance();
+        mVehicleReaderTask = (CsvVehicleReaderTask) getLastCustomNonConfigurationInstance();
 
         if (mVehicleReaderTask == null) {
             mVehicleReaderTask = new CsvVehicleReaderTask(getIntent().getIntExtra(

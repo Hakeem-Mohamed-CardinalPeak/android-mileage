@@ -10,41 +10,36 @@ import android.content.Intent;
 import android.net.Uri;
 import android.view.ContextMenu;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.BaseAdapter;
 import android.widget.Toast;
 
-public class VehicleListActivity extends BaseListActivity {
-    private static final int MENU_TYPES = 1;
-    private static final int MENU_CREATE = 2;
-
-    public VehicleListActivity() {
+public class VehicleListFragment extends BaseListFragment {
+    public VehicleListFragment() {
         super();
     }
 
-    protected VehicleListActivity(BaseAdapter adapter) {
+    protected VehicleListFragment(BaseAdapter adapter) {
         super(adapter);
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        menu.add(Menu.NONE, MENU_CREATE, Menu.NONE, R.string.add_vehicle).setIcon(
-                R.drawable.ic_menu_add);
-        menu.add(Menu.NONE, MENU_TYPES, Menu.NONE, R.string.edit_vehicle_types).setIcon(
-                R.drawable.ic_menu_edit);
-        return super.onCreateOptionsMenu(menu);
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.vehicle_list, menu);
+        super.onCreateOptionsMenu(menu, inflater);
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case MENU_TYPES:
-                startActivity(new Intent(this, VehicleTypeListActivity.class));
-                return true;
-            case MENU_CREATE:
-                startActivity(new Intent(this, VehicleActivity.class));
-                return true;
+        int id = item.getItemId();
+        if (id == R.id.menu_edit_vehicle_types) {
+            startActivity(new Intent(requireContext(), VehicleTypeListActivity.class));
+            return true;
+        } else if (id == R.id.menu_add_vehicle) {
+            startActivity(new Intent(requireContext(), VehicleActivity.class));
+            return true;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -80,8 +75,8 @@ public class VehicleListActivity extends BaseListActivity {
             ContentValues values = new ContentValues();
             values.put(Vehicle.DEFAULT_TIME, System.currentTimeMillis());
             Uri uri = ContentUris.withAppendedId(VehiclesTable.BASE_URI, itemId);
-            getContentResolver().update(uri, values, null, null);
-            Toast.makeText(this, getString(R.string.toast_vehicle_set_as_default),
+            requireContext().getContentResolver().update(uri, values, null, null);
+            Toast.makeText(requireContext(), getString(R.string.toast_vehicle_set_as_default),
                     Toast.LENGTH_SHORT).show();
             return true;
         }

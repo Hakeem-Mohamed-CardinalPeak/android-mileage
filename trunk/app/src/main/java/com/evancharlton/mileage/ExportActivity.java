@@ -5,7 +5,6 @@ import com.evancharlton.mileage.io.CsvExportActivity;
 import com.evancharlton.mileage.io.DbExportActivity;
 import com.evancharlton.mileage.provider.Settings;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -19,7 +18,7 @@ import android.widget.TextView;
 
 import java.io.File;
 
-public class ExportActivity extends Activity {
+public class ExportActivity extends BaseActivity {
     public static final String FILENAME = "filename";
 
     private static final String[] FILE_TYPES = new String[] {
@@ -46,6 +45,7 @@ public class ExportActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.export_form);
+        initToolbar();
 
         mFileTypes = (Spinner) findViewById(R.id.exporter);
         mFilename = (EditText) findViewById(R.id.output_file);
@@ -75,7 +75,7 @@ public class ExportActivity extends Activity {
             }
         });
 
-        mFilenameTask = (FilenameTask) getLastNonConfigurationInstance();
+        mFilenameTask = (FilenameTask) getLastCustomNonConfigurationInstance();
         startFilenameTask(false);
     }
 
@@ -94,7 +94,7 @@ public class ExportActivity extends Activity {
     }
 
     @Override
-    public Object onRetainNonConfigurationInstance() {
+    public Object onRetainCustomNonConfigurationInstance() {
         return mFilenameTask;
     }
 

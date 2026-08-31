@@ -15,8 +15,6 @@ import android.view.View;
 
 public class ServiceIntervalTemplateListActivity extends BaseListActivity implements
         View.OnClickListener {
-    private static final int MENU_CREATE = 1;
-
     @Override
     protected String[] getFrom() {
         return new String[] {
@@ -37,17 +35,15 @@ public class ServiceIntervalTemplateListActivity extends BaseListActivity implem
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        menu.add(Menu.NONE, MENU_CREATE, Menu.NONE, R.string.add_service_interval_template)
-                .setIcon(R.drawable.ic_menu_add);
+        getMenuInflater().inflate(R.menu.service_interval_template_list, menu);
         return super.onCreateOptionsMenu(menu);
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case MENU_CREATE:
-                startActivity(new Intent(this, ServiceIntervalTemplateActivity.class));
-                return true;
+        if (item.getItemId() == R.id.menu_add_service_interval_template) {
+            startActivity(new Intent(this, ServiceIntervalTemplateActivity.class));
+            return true;
         }
         return super.onOptionsItemSelected(item);
     }

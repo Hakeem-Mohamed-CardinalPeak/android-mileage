@@ -11,7 +11,6 @@ import com.evancharlton.mileage.provider.tables.CacheTable;
 import com.evancharlton.mileage.provider.tables.VehiclesTable;
 import com.evancharlton.mileage.tasks.VehicleStatisticsTask;
 
-import android.app.Activity;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Intent;
@@ -20,9 +19,12 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -31,8 +33,10 @@ import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.Toast;
 
-public class VehicleStatisticsActivity extends Activity {
-    private static final String TAG = "VehicleStatisticsActivity";
+import androidx.fragment.app.Fragment;
+
+public class VehicleStatisticsFragment extends Fragment {
+    private static final String TAG = "VehicleStatisticsFragment";
 
     private static final Statistic[] ECONOMIES = {
             Statistics.AVG_ECONOMY, Statistics.MIN_ECONOMY, Statistics.MAX_ECONOMY
@@ -93,24 +97,31 @@ public class VehicleStatisticsActivity extends Activity {
     private VehicleStatisticsAdapter mAdapter;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.vehicle_statistics);
+        setRetainInstance(true);
+        setHasOptionsMenu(true);
+    }
 
-        Object[] saved = (Object[]) getLastNonConfigurationInstance();
-        if (saved != null) {
-            mCalculationTask = (VehicleStatisticsTask) saved[0];
-            mAdapter = null;
-        }
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.vehicle_statistics, container, false);
+    }
+
+    @Override
+    public void onViewCreated(View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
         if (mCalculationTask != null) {
             mCalculationTask.attach(this);
         }
 
-        mListView = (ListView) findViewById(android.R.id.list);
-        mVehicleSpinner = (Spinner) findViewById(R.id.vehicle);
-        mContainer = (LinearLayout) findViewById(R.id.progress_container);
-        mProgressBar = (ProgressBar) findViewById(R.id.progress);
-        mCancel = (ImageView) findViewById(R.id.cancel);
+        mListView = view.findViewById(android.R.id.list);
+        mVehicleSpinner = view.findViewById(R.id.vehicle);
+        mContainer = view.findViewById(R.id.progress_container);
+        mProgressBar = view.findViewById(R.id.progress);
+        mCancel = view.findViewById(R.id.cancel);
 
         mVehicleSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -137,11 +148,11 @@ public class VehicleStatisticsActivity extends Activity {
                 Statistic statistic = Statistics.STATISTICS.get(position);
                 Class<? extends ChartActivity> target = statistic.getChartClass();
                 if (target != null) {
-                    Intent intent = new Intent(VehicleStatisticsActivity.this, target);
+                    Intent intent = new Intent(requireContext(), target);
                     intent.putExtra(ChartActivity.VEHICLE_ID, String.valueOf(mVehicle.getId()));
                     startActivity(intent);
                 } else {
-                    Toast.makeText(VehicleStatisticsActivity.this, getString(R.string.no_chart),
+                    Toast.makeText(requireContext(), getString(R.string.no_chart),
                             Toast.LENGTH_SHORT).show();
                 }
             }
@@ -156,7 +167,7 @@ public class VehicleStatisticsActivity extends Activity {
     }
 
     @Override
-    protected void onResume() {
+    public void onResume() {
         super.onResume();
 
         loadVehicle();
@@ -182,10 +193,11 @@ public class VehicleStatisticsActivity extends Activity {
     }
 
     public Cursor getCacheCursor() {
-        return managedQuery(CacheTable.BASE_URI, CacheTable.PROJECTION, CachedValue.ITEM
-                + " = ? and " + CachedValue.VALID + " = ?", new String[] {
-                String.valueOf(mVehicle.getId()), "1"
-        }, CachedValue.GROUP + " asc, " + CachedValue.ORDER + " asc");
+        return requireContext().getContentResolver().query(CacheTable.BASE_URI,
+                CacheTable.PROJECTION, CachedValue.ITEM + " = ? and " + CachedValue.VALID + " = ?",
+                new String[] {
+                        String.valueOf(mVehicle.getId()), "1"
+                }, CachedValue.GROUP + " asc, " + CachedValue.ORDER + " asc");
     }
 
     public ProgressBar getProgressBar() {
@@ -194,7 +206,7 @@ public class VehicleStatisticsActivity extends Activity {
 
     public void setAdapter(Cursor c) {
         if (mAdapter == null) {
-            mAdapter = new VehicleStatisticsAdapter(this, mVehicle, GROUPS);
+            mAdapter = new VehicleStatisticsAdapter(requireContext(), mVehicle, GROUPS);
         }
         mAdapter.changeCursor(c);
         mListView.setAdapter(mAdapter);
@@ -209,24 +221,16 @@ public class VehicleStatisticsActivity extends Activity {
     }
 
     @Override
-    public Object onRetainNonConfigurationInstance() {
-        return new Object[] {
-                mCalculationTask, mAdapter
-        };
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        menu.add(Menu.NONE, 1, Menu.NONE, "Recalculate").setIcon(R.drawable.ic_menu_recalculate);
-        return super.onCreateOptionsMenu(menu);
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.vehicle_statistics, menu);
+        super.onCreateOptionsMenu(menu, inflater);
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case 1:
-                calculate();
-                return true;
+        if (item.getItemId() == R.id.menu_recalculate) {
+            calculate();
+            return true;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -234,7 +238,8 @@ public class VehicleStatisticsActivity extends Activity {
     private void loadVehicle() {
         long id = mVehicleSpinner.getSelectedItemId();
         Uri uri = ContentUris.withAppendedId(VehiclesTable.BASE_URI, id);
-        Cursor vehicle = managedQuery(uri, VehiclesTable.PROJECTION, null, null, null);
+        Cursor vehicle = requireContext().getContentResolver().query(uri,
+                VehiclesTable.PROJECTION, null, null, null);
         vehicle.moveToFirst();
         mVehicle.load(vehicle);
     }

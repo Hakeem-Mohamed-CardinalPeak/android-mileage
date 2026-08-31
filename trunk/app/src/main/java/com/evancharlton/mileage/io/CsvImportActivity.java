@@ -38,12 +38,12 @@ public class CsvImportActivity extends CsvWizardActivity {
     }
 
     @Override
-    public Object onRetainNonConfigurationInstance() {
+    public Object onRetainCustomNonConfigurationInstance() {
         return mCsvImportTask;
     }
 
     private void restoreTask() {
-        mCsvImportTask = (CsvImportTask) getLastNonConfigurationInstance();
+        mCsvImportTask = (CsvImportTask) getLastCustomNonConfigurationInstance();
 
         if (mCsvImportTask == null) {
             mCsvImportTask = new CsvImportTask();

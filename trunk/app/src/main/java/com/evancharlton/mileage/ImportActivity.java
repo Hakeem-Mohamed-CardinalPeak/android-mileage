@@ -6,7 +6,6 @@ import com.evancharlton.mileage.io.DbImportActivity;
 import com.evancharlton.mileage.provider.Settings;
 import com.evancharlton.mileage.util.Debugger;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
@@ -30,7 +29,7 @@ import android.widget.TextView;
 import java.io.File;
 import java.io.FilenameFilter;
 
-public class ImportActivity extends Activity {
+public class ImportActivity extends BaseActivity {
     private static final String TAG = "ImportActivity";
 
     public static final String FILENAME = "filename";
@@ -64,6 +63,7 @@ public class ImportActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.import_form);
+        initToolbar();
 
         mFileAdapter = new FileAdapter(this);
 

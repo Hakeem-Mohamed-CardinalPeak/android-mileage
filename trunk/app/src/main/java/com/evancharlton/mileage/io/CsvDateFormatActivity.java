@@ -65,12 +65,12 @@ public class CsvDateFormatActivity extends CsvWizardActivity {
     }
 
     @Override
-    public Object onRetainNonConfigurationInstance() {
+    public Object onRetainCustomNonConfigurationInstance() {
         return mDateReaderTask;
     }
 
     private void restoreTask() {
-        mDateReaderTask = (CsvDateReaderTask) getLastNonConfigurationInstance();
+        mDateReaderTask = (CsvDateReaderTask) getLastCustomNonConfigurationInstance();
 
         if (mDateReaderTask == null) {
             mDateReaderTask = new CsvDateReaderTask(getIntent().getIntExtra(Fillup.DATE, 0));

@@ -4,14 +4,14 @@ import com.evancharlton.mileage.adapters.FakeAdapter;
 import com.evancharlton.mileage.tests.TestCase;
 
 public class VehicleListActivityTest extends TestCase {
-	protected VehicleListActivity activity;
+	protected VehicleListFragment activity;
 
 	private final FakeAdapter mMockAdapter = new FakeAdapter();
 
 	protected void setUp() throws Exception {
 		super.setUp();
 
-		activity = new VehicleListActivity(mMockAdapter);
+		activity = new VehicleListFragment(mMockAdapter);
 	}
 
 	public void testCanDelete() {

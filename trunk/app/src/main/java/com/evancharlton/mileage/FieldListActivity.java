@@ -13,22 +13,18 @@ import android.view.MenuItem;
 import android.view.View;
 
 public class FieldListActivity extends BaseListActivity {
-    private static final int MENU_ADD_FIELD = 0;
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        menu.add(Menu.NONE, MENU_ADD_FIELD, Menu.FIRST, R.string.add_field).setIcon(
-                R.drawable.ic_menu_add);
+        getMenuInflater().inflate(R.menu.field_list, menu);
         return super.onCreateOptionsMenu(menu);
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case MENU_ADD_FIELD:
-                Intent intent = new Intent(this, FieldActivity.class);
-                startActivity(intent);
-                return true;
+        if (item.getItemId() == R.id.menu_add_field) {
+            Intent intent = new Intent(this, FieldActivity.class);
+            startActivity(intent);
+            return true;
         }
         return super.onOptionsItemSelected(item);
     }

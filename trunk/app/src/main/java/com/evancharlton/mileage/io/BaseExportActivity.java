@@ -1,18 +1,18 @@
 
 package com.evancharlton.mileage.io;
 
+import com.evancharlton.mileage.BaseActivity;
 import com.evancharlton.mileage.ExportActivity;
 import com.evancharlton.mileage.R;
 import com.evancharlton.mileage.provider.FillUpsProvider;
 import com.evancharlton.mileage.provider.Settings;
 
-import android.app.Activity;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-public abstract class BaseExportActivity extends Activity {
+public abstract class BaseExportActivity extends BaseActivity {
     private ProgressBar mProgressBar;
 
     private TextView mLog;
@@ -24,6 +24,7 @@ public abstract class BaseExportActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.export_progress);
+        initToolbar();
 
         final String filename = getIntent().getStringExtra(ExportActivity.FILENAME);
         setTitle(getString(R.string.exporting, filename));
@@ -33,7 +34,7 @@ public abstract class BaseExportActivity extends Activity {
 
         mProgressBar.setIndeterminate(true);
 
-        mExportTask = (ExportTask) getLastNonConfigurationInstance();
+        mExportTask = (ExportTask) getLastCustomNonConfigurationInstance();
         if (mExportTask == null) {
             mExportTask = createExportTask();
         }
@@ -46,7 +47,7 @@ public abstract class BaseExportActivity extends Activity {
     }
 
     @Override
-    public Object onRetainNonConfigurationInstance() {
+    public Object onRetainCustomNonConfigurationInstance() {
         return mExportTask;
     }
 

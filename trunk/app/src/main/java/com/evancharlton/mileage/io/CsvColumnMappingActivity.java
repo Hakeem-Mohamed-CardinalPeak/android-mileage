@@ -32,12 +32,12 @@ public class CsvColumnMappingActivity extends CsvWizardActivity {
     }
 
     @Override
-    public Object onRetainNonConfigurationInstance() {
+    public Object onRetainCustomNonConfigurationInstance() {
         return mColumnReaderTask;
     }
 
     private void restoreTask() {
-        mColumnReaderTask = (CsvColumnReaderTask) getLastNonConfigurationInstance();
+        mColumnReaderTask = (CsvColumnReaderTask) getLastCustomNonConfigurationInstance();
 
         if (mColumnReaderTask == null) {
             mColumnReaderTask = new CsvColumnReaderTask();

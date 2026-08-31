@@ -20,9 +20,6 @@ import android.view.View;
 
 public class ServiceIntervalsListActivity extends BaseListActivity implements
         DialogInterface.OnClickListener, View.OnClickListener {
-    private static final int MENU_CREATE = 1;
-    private static final int MENU_TEMPLATES = 2;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -74,22 +71,18 @@ public class ServiceIntervalsListActivity extends BaseListActivity implements
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        menu.add(Menu.NONE, MENU_CREATE, Menu.NONE, R.string.add_service_interval).setIcon(
-                R.drawable.ic_menu_add);
-        menu.add(Menu.NONE, MENU_TEMPLATES, Menu.NONE, R.string.service_interval_templates)
-                .setIcon(R.drawable.ic_menu_edit);
+        getMenuInflater().inflate(R.menu.service_intervals_list, menu);
         return super.onCreateOptionsMenu(menu);
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case MENU_CREATE:
-                startActivity(new Intent(this, ServiceIntervalActivity.class));
-                return true;
-            case MENU_TEMPLATES:
-                startActivity(new Intent(this, ServiceIntervalTemplateListActivity.class));
-                return true;
+        if (item.getItemId() == R.id.menu_add_service_interval) {
+            startActivity(new Intent(this, ServiceIntervalActivity.class));
+            return true;
+        } else if (item.getItemId() == R.id.menu_service_interval_templates) {
+            startActivity(new Intent(this, ServiceIntervalTemplateListActivity.class));
+            return true;
         }
         return super.onOptionsItemSelected(item);
     }

@@ -1,85 +1,114 @@
 
 package com.evancharlton.mileage;
 
-import android.app.Activity;
-import android.app.TabActivity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.TabHost;
-import android.widget.TabHost.TabSpec;
 
-public class Mileage extends TabActivity {
-    public static final String VISIBLE_TAB = "visible_tab";
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 
-    public static final String TAG_FILLUP = "fillups";
-    public static final String TAG_HISTORY = "history";
-    public static final String TAG_STATISTICS = "statistics";
-    public static final String TAG_VEHICLES = "vehicles";
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 
-    private TabHost mTabHost;
+public class Mileage extends BaseActivity implements FillupFragment.OnFillupSavedListener {
+    private static final String TAG_FILLUP = "fillups";
+    private static final String TAG_HISTORY = "history";
+    private static final String TAG_STATISTICS = "statistics";
+    private static final String TAG_VEHICLES = "vehicles";
+
+    private Fragment mFillupFragment;
+    private Fragment mHistoryFragment;
+    private Fragment mStatisticsFragment;
+    private Fragment mVehiclesFragment;
+    private Fragment mActiveFragment;
+
+    private BottomNavigationView mBottomNavigation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.tabs);
+        setContentView(R.layout.activity_main);
+        initToolbar();
 
-        mTabHost = getTabHost();
-        mTabHost.addTab(createTabSpec(TAG_FILLUP, FillupActivity.class, R.string.fillup,
-                R.drawable.ic_tab_fillup));
-        mTabHost.addTab(createTabSpec(TAG_HISTORY, FillupListActivity.class, R.string.history,
-                R.drawable.ic_tab_history));
-        mTabHost.addTab(createTabSpec(TAG_STATISTICS, VehicleStatisticsActivity.class,
-                R.string.statistics, R.drawable.ic_tab_statistics));
-        mTabHost.addTab(createTabSpec(TAG_VEHICLES, VehicleListActivity.class, R.string.vehicles,
-                R.drawable.ic_tab_vehicles));
+        FragmentManager fm = getSupportFragmentManager();
+        if (savedInstanceState == null) {
+            mFillupFragment = new FillupFragment();
+            mHistoryFragment = new FillupListFragment();
+            mStatisticsFragment = new VehicleStatisticsFragment();
+            mVehiclesFragment = new VehicleListFragment();
 
-        mTabHost.setOnTabChangedListener(new TabHost.OnTabChangeListener() {
-            @Override
-            public void onTabChanged(String tabId) {
-                // hide the virtual keyboard when switching tabs
-                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                imm.hideSoftInputFromWindow(mTabHost.getApplicationWindowToken(), 0);
-            }
-        });
-
-        String requestedTab = getIntent().getStringExtra(VISIBLE_TAB);
-        if (requestedTab != null) {
-            switchTo(requestedTab);
+            fm.beginTransaction()
+                    .add(R.id.content_frame, mVehiclesFragment, TAG_VEHICLES)
+                    .hide(mVehiclesFragment)
+                    .add(R.id.content_frame, mStatisticsFragment, TAG_STATISTICS)
+                    .hide(mStatisticsFragment)
+                    .add(R.id.content_frame, mHistoryFragment, TAG_HISTORY)
+                    .hide(mHistoryFragment)
+                    .add(R.id.content_frame, mFillupFragment, TAG_FILLUP)
+                    .commit();
+        } else {
+            mFillupFragment = fm.findFragmentByTag(TAG_FILLUP);
+            mHistoryFragment = fm.findFragmentByTag(TAG_HISTORY);
+            mStatisticsFragment = fm.findFragmentByTag(TAG_STATISTICS);
+            mVehiclesFragment = fm.findFragmentByTag(TAG_VEHICLES);
         }
+        mActiveFragment = mFillupFragment;
+
+        mBottomNavigation = findViewById(R.id.bottom_navigation);
+        mBottomNavigation.setOnItemSelectedListener(item -> {
+            int id = item.getItemId();
+            if (id == R.id.menu_tab_fillup) {
+                switchTo(mFillupFragment);
+            } else if (id == R.id.menu_tab_history) {
+                switchTo(mHistoryFragment);
+            } else if (id == R.id.menu_tab_statistics) {
+                switchTo(mStatisticsFragment);
+            } else if (id == R.id.menu_tab_vehicles) {
+                switchTo(mVehiclesFragment);
+            }
+            return true;
+        });
+    }
+
+    private void switchTo(Fragment target) {
+        if (target == mActiveFragment) {
+            return;
+        }
+
+        // hide the virtual keyboard when switching tabs
+        InputMethodManager imm =
+                (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (getCurrentFocus() != null) {
+            imm.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+        }
+
+        getSupportFragmentManager().beginTransaction()
+                .hide(mActiveFragment)
+                .show(target)
+                .commit();
+        mActiveFragment = target;
     }
 
     public void switchToHistoryTab() {
-        switchTo(TAG_HISTORY);
+        mBottomNavigation.setSelectedItemId(R.id.menu_tab_history);
     }
 
-    public void switchTo(String tag) {
-        mTabHost.setCurrentTabByTag(tag);
-    }
-
-    private TabSpec createTabSpec(String tag, Class<? extends Activity> cls, int string, int icon) {
-        TabSpec spec = mTabHost.newTabSpec(tag);
-        spec.setContent(new Intent(this, cls));
-        spec.setIndicator(getString(string), getResources().getDrawable(icon));
-        return spec;
+    @Override
+    public void onFillupSaved() {
+        switchToHistoryTab();
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        add(menu, R.string.service_intervals, ServiceIntervalsListActivity.class).setIcon(
-                R.drawable.ic_menu_intervals);
-        add(menu, R.string.import_export, ImportExportActivity.class)
-                .setIcon(R.drawable.ic_menu_ie);
-        add(menu, R.string.settings, SettingsActivity.class)
-                .setIcon(R.drawable.ic_menu_preferences);
+        getMenuInflater().inflate(R.menu.mileage, menu);
+        menu.findItem(R.id.menu_service_intervals).setIntent(
+                new Intent(this, ServiceIntervalsListActivity.class));
+        menu.findItem(R.id.menu_import_export).setIntent(
+                new Intent(this, ImportExportActivity.class));
+        menu.findItem(R.id.menu_settings).setIntent(new Intent(this, SettingsActivity.class));
         return super.onCreateOptionsMenu(menu);
-    }
-
-    private final MenuItem add(final Menu menu, final int string,
-            final Class<? extends Activity> cls) {
-        return menu.add(Menu.NONE, string, Menu.NONE, string).setIntent(new Intent(this, cls));
     }
 }

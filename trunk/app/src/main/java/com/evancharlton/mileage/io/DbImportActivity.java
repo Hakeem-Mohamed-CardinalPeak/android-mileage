@@ -1,18 +1,18 @@
 
 package com.evancharlton.mileage.io;
 
+import com.evancharlton.mileage.BaseActivity;
 import com.evancharlton.mileage.ImportActivity;
 import com.evancharlton.mileage.R;
 import com.evancharlton.mileage.tasks.DbImportTask;
 
-import android.app.Activity;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-public class DbImportActivity extends Activity {
+public class DbImportActivity extends BaseActivity {
     private DbImportTask mTask;
 
     private TextView mLog;
@@ -22,6 +22,7 @@ public class DbImportActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.import_csv_progress);
+        initToolbar();
 
         mLog = (TextView) findViewById(R.id.log);
         mProgressBar = (ProgressBar) findViewById(R.id.progress);

@@ -6,7 +6,6 @@ import com.evancharlton.mileage.exceptions.InvalidFieldException;
 import com.evancharlton.mileage.provider.Settings;
 
 import android.app.AlertDialog;
-import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -15,43 +14,57 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public abstract class BaseFormActivity extends BaseActivity {
-    public static final String EXTRA_ITEM_ID = "dao_item_id";
+import androidx.fragment.app.Fragment;
 
+public abstract class BaseFormFragment extends Fragment {
     protected SharedPreferences mPreferences;
 
     private Button mSaveBtn;
 
-    protected void onCreate(Bundle savedInstanceState, int layoutResId) {
+    private Bundle mArguments;
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.base_form);
-        LinearLayout stub = (LinearLayout) findViewById(R.id.contents);
-        LayoutInflater.from(this).inflate(layoutResId, stub);
-        initToolbar();
-        mPreferences = getSharedPreferences(Settings.NAME, MODE_PRIVATE);
+        setHasOptionsMenu(true);
+        mArguments = getArguments();
+        mPreferences = requireContext().getSharedPreferences(Settings.NAME, android.content.Context.MODE_PRIVATE);
     }
 
     @Override
-    protected void onResume() {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {
+        View root = inflater.inflate(R.layout.base_form_fragment, container, false);
+        LinearLayout stub = root.findViewById(R.id.contents);
+        LayoutInflater.from(requireContext()).inflate(getContentLayoutResId(), stub);
+        return root;
+    }
+
+    protected abstract int getContentLayoutResId();
+
+    @Override
+    public void onResume() {
         super.onResume();
 
         initUI();
 
-        mSaveBtn = (Button) findViewById(R.id.save_btn);
+        mSaveBtn = requireView().findViewById(R.id.save_btn);
         mSaveBtn.setText(getString(getCreateString()));
         mSaveBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 try {
                     setFields();
-                    if (getDao().save(BaseFormActivity.this)) {
+                    if (getDao().save(requireContext())) {
                         if (postSaveValidation()) {
                             saved();
                         }
@@ -62,11 +75,12 @@ public abstract class BaseFormActivity extends BaseActivity {
             }
         });
 
-        Intent intent = getIntent();
-        Long id = intent.getLongExtra(EXTRA_ITEM_ID, getDao().getId());
+        Long id = mArguments != null ? mArguments.getLong(BaseFormActivity.EXTRA_ITEM_ID,
+                getDao().getId()) : getDao().getId();
         if (id != null && id != getDao().getId()) {
             Uri uri = getUri(id);
-            Cursor cursor = managedQuery(uri, getProjectionArray(), null, null, null);
+            Cursor cursor = requireContext().getContentResolver().query(uri, getProjectionArray(),
+                    null, null, null);
             if (cursor.getCount() == 1) {
                 cursor.moveToFirst();
                 getDao().load(cursor);
@@ -79,7 +93,7 @@ public abstract class BaseFormActivity extends BaseActivity {
     protected void handleInvalidField(InvalidFieldException e) {
         TextView field = e.getField();
         if (field == null) {
-            Toast.makeText(BaseFormActivity.this, getString(e.getErrorMessage()), Toast.LENGTH_LONG)
+            Toast.makeText(requireContext(), getString(e.getErrorMessage()), Toast.LENGTH_LONG)
                     .show();
         } else {
             field.setError(getString(e.getErrorMessage()));
@@ -88,51 +102,35 @@ public abstract class BaseFormActivity extends BaseActivity {
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.base_form, menu);
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.base_form, menu);
         menu.findItem(R.id.menu_delete).setVisible(getDao().isExistingObject() && canDelete());
-        return super.onCreateOptionsMenu(menu);
+        super.onCreateOptionsMenu(menu, inflater);
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.menu_delete) {
-            showDialog(R.string.delete);
+            new AlertDialog.Builder(requireContext())
+                    .setTitle(R.string.dialog_title_delete)
+                    .setMessage(R.string.dialog_message_delete)
+                    .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            if (getDao().delete(requireContext())) {
+                                deleted();
+                            }
+                        }
+                    })
+                    .setNegativeButton(android.R.string.no, null)
+                    .show();
             return true;
         }
         return super.onOptionsItemSelected(item);
     }
 
-    @Override
-    protected Dialog onCreateDialog(final int id) {
-        switch (id) {
-            case R.string.delete:
-                return new AlertDialog.Builder(this)
-                        .setTitle(R.string.dialog_title_delete)
-                        .setMessage(R.string.dialog_message_delete)
-                        .setPositiveButton(android.R.string.yes,
-                                new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        removeDialog(id);
-                                        if (getDao().delete(BaseFormActivity.this)) {
-                                            deleted();
-                                        }
-                                    }
-                                })
-                        .setNegativeButton(android.R.string.no,
-                                new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        removeDialog(id);
-                                    }
-                                }).create();
-        }
-        return super.onCreateDialog(id);
-    }
-
     protected void deleted() {
-        finish();
+        requireActivity().finish();
     }
 
     protected boolean postSaveValidation() {
@@ -140,7 +138,7 @@ public abstract class BaseFormActivity extends BaseActivity {
     }
 
     protected void saved() {
-        finish();
+        requireActivity().finish();
     }
 
     protected boolean canDelete() {

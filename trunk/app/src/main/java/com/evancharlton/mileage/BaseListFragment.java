@@ -14,9 +14,11 @@ import android.os.Bundle;
 import android.provider.BaseColumns;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.BaseAdapter;
@@ -24,47 +26,56 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 
-public abstract class BaseListActivity extends BaseActivity implements
-        AdapterView.OnItemClickListener, View.OnCreateContextMenuListener {
+import androidx.fragment.app.Fragment;
+
+public abstract class BaseListFragment extends Fragment implements
+        AdapterView.OnItemClickListener {
     protected ListView mListView;
     protected LinearLayout mEmptyView;
     private BaseAdapter mAdapter;
 
-    public BaseListActivity() {
+    public BaseListFragment() {
         super();
+        setHasOptionsMenu(true);
     }
 
-    protected BaseListActivity(BaseAdapter adapter) {
+    protected BaseListFragment(BaseAdapter adapter) {
+        this();
         mAdapter = adapter;
     }
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        this.onCreate(savedInstanceState, R.layout.list);
-    }
-
-    protected void onCreate(Bundle savedInstanceState, int layoutResId) {
-        super.onCreate(savedInstanceState);
-        setContentView(layoutResId);
-        initToolbar();
-        mListView = (ListView) findViewById(android.R.id.list);
-        mEmptyView = (LinearLayout) findViewById(android.R.id.empty);
-        mListView.setEmptyView(mEmptyView);
+    protected int getLayoutResId() {
+        return R.layout.list_fragment;
     }
 
     @Override
-    protected void onResume() {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {
+        return inflater.inflate(getLayoutResId(), container, false);
+    }
+
+    @Override
+    public void onViewCreated(View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        mEmptyView = view.findViewById(android.R.id.empty);
+    }
+
+    @Override
+    public void onResume() {
         super.onResume();
 
         initUI();
 
+        mListView = requireView().findViewById(android.R.id.list);
         if (mAdapter == null) {
-            mAdapter = new SimpleCursorAdapter(this, getListLayout(), getCursor(), getFrom(),
-                    getTo());
+            mAdapter = new SimpleCursorAdapter(requireContext(), getListLayout(), getCursor(),
+                    getFrom(), getTo());
         }
         mListView.setAdapter(mAdapter);
         mListView.setOnItemClickListener(this);
-        mListView.setOnCreateContextMenuListener(this);
+        registerForContextMenu(mListView);
+
+        mListView.setEmptyView(mEmptyView);
 
         setupEmptyView();
 
@@ -85,8 +96,8 @@ public abstract class BaseListActivity extends BaseActivity implements
     }
 
     protected Cursor getCursor() {
-        return managedQuery(getUri(), getProjectionArray(), getSelection(), getSelectionArgs(),
-                getSortOrder());
+        return requireContext().getContentResolver().query(getUri(), getProjectionArray(),
+                getSelection(), getSelectionArgs(), getSortOrder());
     }
 
     protected String getSelection() {
@@ -124,7 +135,7 @@ public abstract class BaseListActivity extends BaseActivity implements
     }
 
     protected void loadItem(long id, Class<? extends Activity> cls) {
-        Intent intent = new Intent(this, cls);
+        Intent intent = new Intent(requireContext(), cls);
         intent.putExtra(BaseFormActivity.EXTRA_ITEM_ID, id);
         startActivity(intent);
     }
@@ -164,7 +175,8 @@ public abstract class BaseListActivity extends BaseActivity implements
 
     protected void showDeleteDialog(final Runnable deleteAction) {
         // TODO(3.1) - This dialog doesn't persist through rotations.
-        Dialog deleteDialog = new AlertDialog.Builder(this).setTitle(R.string.dialog_title_delete)
+        Dialog deleteDialog = new AlertDialog.Builder(requireContext())
+                .setTitle(R.string.dialog_title_delete)
                 .setMessage(R.string.dialog_message_delete)
                 .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                     @Override
@@ -203,9 +215,10 @@ public abstract class BaseListActivity extends BaseActivity implements
             showDeleteDialog(new Runnable() {
                 @Override
                 public void run() {
-                    getContentResolver().delete(getUri(), Dao._ID + " = ?", new String[] {
-                            String.valueOf(itemId)
-                    });
+                    requireContext().getContentResolver().delete(getUri(), Dao._ID + " = ?",
+                            new String[] {
+                                    String.valueOf(itemId)
+                            });
                     itemDeleted(itemId);
                 }
             });

@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen
 	xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
 >
 	<CheckBoxPreference
 		android:key="location_data"
@@ -50,12 +47,10 @@
 			android:summaryOn="@string/settings_interval_enabled_on"
 			android:summaryOff="@string/settings_interval_enabled_off"
 		/>
-		<RingtonePreference
-			android:layout="?android:attr/preferenceLayoutChild"
+		<com.evancharlton.mileage.preferences.RingtonePreference
 			android:dependency="interval_notification_enabled"
 			android:key="interval_notification_ringtone"
 			android:title="@string/settings_interval_sound"
-			android:ringtoneType="notification"
 			android:defaultValue="content://settings/system/notification_sound"
 		/>
 		<CheckBoxPreference

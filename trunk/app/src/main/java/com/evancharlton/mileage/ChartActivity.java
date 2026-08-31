@@ -5,17 +5,17 @@ import com.artfulbits.aiCharts.ChartView;
 import com.artfulbits.aiCharts.Base.ChartArea;
 import com.artfulbits.aiCharts.Base.ChartSeries;
 
-import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.format.DateFormat;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ZoomControls;
 
-public abstract class ChartActivity extends Activity implements DialogInterface.OnCancelListener {
+public abstract class ChartActivity extends BaseActivity implements DialogInterface.OnCancelListener {
     public static final String VEHICLE_ID = "vehicle_id";
 
     private static final int PROGRESS_DIALOG = 1;
@@ -29,6 +29,8 @@ public abstract class ChartActivity extends Activity implements DialogInterface.
     protected final void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.chart);
+        initToolbar();
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         mChart = (ChartView) findViewById(R.id.chart);
         mZoomControls = (ZoomControls) findViewById(R.id.zoom_controls);
@@ -52,12 +54,21 @@ public abstract class ChartActivity extends Activity implements DialogInterface.
         });
     }
 
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            finish();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
     protected void zoom(double factor) {
         getChart().getAreas().get(0).getDefaultXAxis().getScale().mulZoom(factor);
     }
 
     @Override
-    public Object onRetainNonConfigurationInstance() {
+    public Object onRetainCustomNonConfigurationInstance() {
         return new Object[] {
                 mChartGenerator,
                 serializeData()
@@ -65,7 +76,7 @@ public abstract class ChartActivity extends Activity implements DialogInterface.
     }
 
     private void restoreLastNonConfigurationInstance() {
-        Object saved = getLastNonConfigurationInstance();
+        Object saved = getLastCustomNonConfigurationInstance();
         if (saved != null) {
             Object[] array = (Object[]) saved;
             mChartGenerator = (ChartGenerator) array[0];

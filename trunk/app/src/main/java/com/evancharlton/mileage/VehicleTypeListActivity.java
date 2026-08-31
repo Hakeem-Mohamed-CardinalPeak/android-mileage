@@ -11,21 +11,17 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 public class VehicleTypeListActivity extends BaseListActivity {
-    private static final int MENU_CREATE = 1;
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        menu.add(Menu.NONE, MENU_CREATE, Menu.NONE, R.string.add_vehicle_type).setIcon(
-                R.drawable.ic_menu_add);
+        getMenuInflater().inflate(R.menu.vehicle_type_list, menu);
         return super.onCreateOptionsMenu(menu);
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case MENU_CREATE:
-                startActivity(new Intent(this, VehicleTypeActivity.class));
-                return true;
+        if (item.getItemId() == R.id.menu_add_vehicle_type) {
+            startActivity(new Intent(this, VehicleTypeActivity.class));
+            return true;
         }
         return super.onOptionsItemSelected(item);
     }
