@@ -84,6 +84,22 @@ public class FillupFragment extends BaseFormFragment {
         return R.layout.fillup;
     }
 
+    @Override
+    public void onHiddenChanged(boolean hidden) {
+        super.onHiddenChanged(hidden);
+        // hide()/show() tab switches don't trigger onResume(), unlike the per-tab
+        // Activities this used to be, so the vehicle list can otherwise go stale
+        // after a vehicle is added/removed from another tab.
+        if (!hidden && mVehicles != null) {
+            long previousId = mVehicles.getSelectedItemId();
+            mVehicles.filter(null, null);
+            mVehicles.setSelectedId(previousId);
+
+            mVehicle = null;
+            setDataFormats();
+        }
+    }
+
     private final Vehicle getVehicle() {
         if (mVehicle == null) {
             mVehicle = Vehicle.loadById(requireContext(), mVehicles.getSelectedItemId());

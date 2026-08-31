@@ -10,6 +10,7 @@ import com.evancharlton.mileage.provider.StatisticsGroup;
 import com.evancharlton.mileage.provider.tables.CacheTable;
 import com.evancharlton.mileage.provider.tables.VehiclesTable;
 import com.evancharlton.mileage.tasks.VehicleStatisticsTask;
+import com.evancharlton.mileage.views.CursorSpinner;
 
 import android.content.ContentUris;
 import android.content.ContentValues;
@@ -30,7 +31,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
-import android.widget.Spinner;
 import android.widget.Toast;
 
 import androidx.fragment.app.Fragment;
@@ -82,7 +82,7 @@ public class VehicleStatisticsFragment extends Fragment {
 
     private final Vehicle mVehicle = new Vehicle(new ContentValues());
 
-    private Spinner mVehicleSpinner;
+    private CursorSpinner mVehicleSpinner;
 
     private ListView mListView;
 
@@ -170,6 +170,25 @@ public class VehicleStatisticsFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
+        refreshVehicleSelection();
+    }
+
+    @Override
+    public void onHiddenChanged(boolean hidden) {
+        super.onHiddenChanged(hidden);
+        // hide()/show() tab switches don't trigger onResume(), unlike the per-tab
+        // Activities this used to be, so the vehicle list (and this tab's data) can
+        // otherwise go stale after a vehicle is added/removed from another tab.
+        if (!hidden && mVehicleSpinner != null) {
+            refreshVehicleSelection();
+        }
+    }
+
+    private void refreshVehicleSelection() {
+        long previousId = mVehicle.getId();
+        mVehicleSpinner.filter(null, null);
+        mVehicleSpinner.setSelectedId(previousId);
+
         loadVehicle();
         recalculate();
     }
@@ -240,8 +259,10 @@ public class VehicleStatisticsFragment extends Fragment {
         Uri uri = ContentUris.withAppendedId(VehiclesTable.BASE_URI, id);
         Cursor vehicle = requireContext().getContentResolver().query(uri,
                 VehiclesTable.PROJECTION, null, null, null);
-        vehicle.moveToFirst();
-        mVehicle.load(vehicle);
+        if (vehicle.moveToFirst()) {
+            mVehicle.load(vehicle);
+        }
+        vehicle.close();
     }
 
     public Vehicle getVehicle() {

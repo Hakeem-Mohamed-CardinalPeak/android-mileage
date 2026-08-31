@@ -89,18 +89,23 @@ public class VehicleStatisticsAdapter extends BaseAdapter {
                 final int length = mObjects.size();
                 final long vehicleId = mVehicle.getId();
                 int num = 0;
+                boolean missingValue = false;
                 for (int i = 0; i < length; i++) {
                     StatisticHolder holder = mObjects.get(i);
                     if (holder.type == TYPE_STATISTIC) {
+                        String value = mValues.get(holder.key);
+                        if (value == null) {
+                            missingValue = true;
+                        }
                         ContentValues v = new ContentValues();
                         v.put(CachedValue.ITEM, vehicleId);
                         v.put(CachedValue.VALID, true);
-                        v.put(CachedValue.VALUE, mValues.get(holder.key));
+                        v.put(CachedValue.VALUE, value);
                         v.put(CachedValue.KEY, holder.key);
                         values[num++] = v;
                     }
                 }
-                if (num != values.length) {
+                if (num != values.length || missingValue) {
                     Log.d(TAG, "Not writing to the database because we don't have all the stats");
                 } else {
                     Log.d(TAG, "Writing " + num + " records to the database ...");
@@ -116,6 +121,10 @@ public class VehicleStatisticsAdapter extends BaseAdapter {
 
     public void changeCursor(Cursor cursor) {
         // TODO(3.1) - This isn't efficient and it runs on the UI thread. Boo!
+        // mValues is keyed by statistic, not by vehicle, so it must be cleared here -
+        // otherwise switching to a vehicle with fewer (or no) cached stats leaves the
+        // previously-selected vehicle's values on screen.
+        mValues.clear();
         cursor.moveToPosition(-1);
         final int key_position = cursor.getColumnIndex(CachedValue.KEY);
         final int value_position = cursor.getColumnIndex(CachedValue.VALUE);

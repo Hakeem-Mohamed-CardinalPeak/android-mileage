@@ -68,6 +68,7 @@ public class FillupListFragment extends Fragment {
 
     @Override
     public void onResume() {
+        refreshVehicleSelection();
         mAdapter.requery();
         super.onResume();
         ContextCompat.registerReceiver(requireContext(), mCalculationFinishedReceiver,
@@ -79,6 +80,31 @@ public class FillupListFragment extends Fragment {
     public void onPause() {
         requireContext().unregisterReceiver(mCalculationFinishedReceiver);
         super.onPause();
+    }
+
+    @Override
+    public void onHiddenChanged(boolean hidden) {
+        super.onHiddenChanged(hidden);
+        // hide()/show() tab switches don't trigger onResume(), unlike the per-tab
+        // Activities this used to be, so the vehicle list can otherwise go stale
+        // after a vehicle is added/removed from another tab.
+        if (!hidden && mVehicles != null) {
+            refreshVehicleSelection();
+            mAdapter.requery();
+        }
+    }
+
+    private void refreshVehicleSelection() {
+        if (mVehicle == null) {
+            return;
+        }
+        long previousId = mVehicle.getId();
+        mVehicles.filter(null, null);
+        mVehicles.setSelectedId(previousId);
+
+        mVehicle = getVehicle();
+        mAdapter.setVehicle(mVehicle);
+        calculate();
     }
 
     protected void initUI(View view) {
