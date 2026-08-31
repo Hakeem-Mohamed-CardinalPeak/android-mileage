@@ -1,9 +1,11 @@
 
 package com.evancharlton.mileage;
 
-import com.artfulbits.aiCharts.ChartView;
-import com.artfulbits.aiCharts.Base.ChartArea;
-import com.artfulbits.aiCharts.Base.ChartSeries;
+import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.formatter.ValueFormatter;
 
 import android.app.Dialog;
 import android.app.ProgressDialog;
@@ -15,12 +17,17 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ZoomControls;
 
+import java.util.Date;
+
 public abstract class ChartActivity extends BaseActivity implements DialogInterface.OnCancelListener {
     public static final String VEHICLE_ID = "vehicle_id";
 
+    /** Chart x-values are days-since-epoch (float-safe), not raw millisecond timestamps. */
+    public static final long MS_PER_DAY = 86400000L;
+
     private static final int PROGRESS_DIALOG = 1;
 
-    private ChartView mChart;
+    private LineChart mChart;
     private ZoomControls mZoomControls;
     private ChartGenerator mChartGenerator;
     private ProgressDialog mProgressDialog;
@@ -32,24 +39,38 @@ public abstract class ChartActivity extends BaseActivity implements DialogInterf
         initToolbar();
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        mChart = (ChartView) findViewById(R.id.chart);
+        mChart = (LineChart) findViewById(R.id.chart);
         mZoomControls = (ZoomControls) findViewById(R.id.zoom_controls);
 
-        restoreLastNonConfigurationInstance();
+        mChart.getDescription().setEnabled(false);
+        mChart.getAxisRight().setEnabled(false);
+        mChart.getLegend().setEnabled(false);
+        mChart.setScaleYEnabled(false);
+        mChart.setPinchZoom(false);
 
-        mChart.setPanning(ChartView.PANNING_HORIZONTAL);
+        final XAxis xAxis = mChart.getXAxis();
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+        xAxis.setValueFormatter(new ValueFormatter() {
+            @Override
+            public String getFormattedValue(float value) {
+                return DateFormat.getDateFormat(ChartActivity.this).format(
+                        new Date((long) (value * MS_PER_DAY)));
+            }
+        });
+
+        restoreLastNonConfigurationInstance();
 
         mZoomControls.setOnZoomInClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View arg0) {
-                zoom(0.5);
+                mChart.zoomIn();
             }
         });
 
         mZoomControls.setOnZoomOutClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View arg0) {
-                zoom(2);
+                mChart.zoomOut();
             }
         });
     }
@@ -61,10 +82,6 @@ public abstract class ChartActivity extends BaseActivity implements DialogInterf
             return true;
         }
         return super.onOptionsItemSelected(item);
-    }
-
-    protected void zoom(double factor) {
-        getChart().getAreas().get(0).getDefaultXAxis().getScale().mulZoom(factor);
     }
 
     @Override
@@ -94,7 +111,7 @@ public abstract class ChartActivity extends BaseActivity implements DialogInterf
 
     protected abstract void unserializeData(Object saved);
 
-    protected final ChartView getChart() {
+    protected final LineChart getChart() {
         return mChart;
     }
 
@@ -134,14 +151,14 @@ public abstract class ChartActivity extends BaseActivity implements DialogInterf
         return mProgressDialog;
     }
 
-    protected void addChartSeries(ChartSeries series) {
-        ChartArea area = new ChartArea();
-        area.getDefaultXAxis().setFormat(DateFormat.getDateFormat(this));
-        mChart.getSeries().add(series);
-        mChart.getAreas().add(area);
+    protected void addChartSeries(ChartData data) {
+        LineDataSet dataSet = new LineDataSet(data.points, data.label);
+        dataSet.setDrawValues(false);
+        mChart.setData(new LineData(dataSet));
+        mChart.invalidate();
     }
 
-    public abstract static class ChartGenerator extends AsyncTask<Object, Integer, ChartSeries[]> {
+    public abstract static class ChartGenerator extends AsyncTask<Object, Integer, ChartData[]> {
         private ChartActivity mActivity;
         private ProgressDialog mCachedProgressDialog;
 
@@ -165,7 +182,7 @@ public abstract class ChartActivity extends BaseActivity implements DialogInterf
         }
 
         @Override
-        protected void onPostExecute(ChartSeries[] series) {
+        protected void onPostExecute(ChartData[] series) {
             if (isCancelled()) {
                 return;
             }

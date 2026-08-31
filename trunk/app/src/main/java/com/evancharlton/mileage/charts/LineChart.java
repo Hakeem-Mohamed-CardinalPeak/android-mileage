@@ -1,28 +1,28 @@
 
 package com.evancharlton.mileage.charts;
 
-import com.artfulbits.aiCharts.Base.ChartPoint;
-import com.artfulbits.aiCharts.Base.ChartPointCollection;
-import com.artfulbits.aiCharts.Base.ChartSeries;
-import com.artfulbits.aiCharts.Types.ChartTypes;
 import com.evancharlton.mileage.ChartActivity;
+import com.evancharlton.mileage.ChartData;
 import com.evancharlton.mileage.dao.Fillup;
 import com.evancharlton.mileage.dao.Vehicle;
 import com.evancharlton.mileage.provider.tables.FillupsTable;
 import com.evancharlton.mileage.provider.tables.VehiclesTable;
+import com.github.mikephil.charting.data.Entry;
 
 import android.database.Cursor;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 public abstract class LineChart extends ChartActivity {
-    private ChartPointCollection mPoints;
+    private List<Entry> mPoints;
 
     protected abstract String getAxisTitle();
 
     protected abstract ChartGenerator createChartGenerator();
 
-    protected final void createSeries(LineChartGenerator generator, ChartPointCollection points,
+    protected final void createSeries(LineChartGenerator generator, List<Entry> points,
             Cursor cursor, Vehicle vehicle) {
         mPoints = points;
         // TODO(3.1) - consolidate this while loop
@@ -30,7 +30,8 @@ public abstract class LineChart extends ChartActivity {
     }
 
     protected final void addPoint(Date date, double value) {
-        mPoints.addDate(date, value);
+        float day = (float) (date.getTime() / MS_PER_DAY);
+        mPoints.add(new Entry(day, (float) value));
     }
 
     protected final void addPoint(long timestamp, double value) {
@@ -50,29 +51,21 @@ public abstract class LineChart extends ChartActivity {
 
     @Override
     protected final Object serializeData() {
-        return getChart().getSeries().get(0).getPoints().toArray();
+        return mPoints;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     protected final void unserializeData(Object saved) {
-        ChartPoint[] savedData = (ChartPoint[]) saved;
+        List<Entry> savedData = (List<Entry>) saved;
         if (savedData != null) {
-            ChartSeries series = new ChartSeries(getAxisTitle().toString(), ChartTypes.Line);
-            ChartPointCollection points = series.getPoints();
-            for (ChartPoint point : savedData) {
-                points.add(point);
-            }
-            addChartSeries(series);
+            addChartSeries(new ChartData(getAxisTitle(), savedData));
         }
     }
 
     @Override
     protected final Object[] getExecuteParameters() {
         return null;
-    }
-
-    protected ChartSeries createSeries() {
-        return new ChartSeries(getAxisTitle(), ChartTypes.Line);
     }
 
     protected static class LineChartGenerator extends ChartGenerator {
@@ -87,9 +80,8 @@ public abstract class LineChart extends ChartActivity {
         }
 
         @Override
-        protected ChartSeries[] doInBackground(Object... params) {
-            ChartSeries series = mActivity.createSeries();
-            ChartPointCollection points = series.getPoints();
+        protected ChartData[] doInBackground(Object... params) {
+            List<Entry> points = new ArrayList<Entry>();
 
             Cursor cursor = getActivity().getContentResolver().query(FillupsTable.BASE_URI,
                     mProjection, Fillup.VEHICLE_ID + " = ?", new String[] {
@@ -103,8 +95,8 @@ public abstract class LineChart extends ChartActivity {
             if (isCancelled()) {
                 return null;
             }
-            return new ChartSeries[] {
-                    series
+            return new ChartData[] {
+                    new ChartData(mActivity.getAxisTitle(), points)
             };
         }
 
