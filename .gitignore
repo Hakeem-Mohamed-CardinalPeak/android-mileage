@@ -1,4 +1,6 @@
-trunk/gen/
-trunk/bin/
-trunk/keys.properties
-trunk/assets/license.lic
+/local.properties
+.gradle/
+**/build/
+.idea/
+*.iml
+captures/

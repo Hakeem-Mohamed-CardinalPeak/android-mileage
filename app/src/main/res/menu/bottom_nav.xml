@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/menu_tab_fillup"
+        android:icon="@drawable/ic_tab_fillup"
+        android:title="@string/fillup" />
+    <item
+        android:id="@+id/menu_tab_history"
+        android:icon="@drawable/ic_tab_history"
+        android:title="@string/history" />
+    <item
+        android:id="@+id/menu_tab_statistics"
+        android:icon="@drawable/ic_tab_statistics"
+        android:title="@string/statistics" />
+    <item
+        android:id="@+id/menu_tab_vehicles"
+        android:icon="@drawable/ic_tab_vehicles"
+        android:title="@string/vehicles" />
+</menu>
