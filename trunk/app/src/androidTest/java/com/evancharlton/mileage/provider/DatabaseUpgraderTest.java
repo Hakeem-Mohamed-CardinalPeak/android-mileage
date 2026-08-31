@@ -11,14 +11,25 @@ import com.evancharlton.mileage.provider.tables.ContentTable;
 import com.evancharlton.mileage.provider.tables.VehiclesTable;
 import com.evancharlton.mileage.tests.TestCase;
 
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 /**
  * Verifies that a database can be successfully upgraded from a previous version
  * of Mileage. All the database-creation code was pulled from the previous
  * versions, so it should be accurate.
- * 
+ *
  */
+@RunWith(AndroidJUnit4.class)
 public class DatabaseUpgraderTest extends TestCase {
 	// version 1.X
+	@Test
 	public void testUpgradeFromVersion1X_EmptyDatabase() {
 		SQLiteDatabase db = createDatabaseForVersion(3);
 		DatabaseUpgrader.upgradeDatabase(db);
@@ -26,6 +37,7 @@ public class DatabaseUpgraderTest extends TestCase {
 		db.close();
 	}
 
+	@Test
 	public void testUpgradeFromVersion1X_Vehicles() {
 		SQLiteDatabase db = createDatabaseForVersion(3);
 		verifyVehicles(db);
@@ -33,6 +45,7 @@ public class DatabaseUpgraderTest extends TestCase {
 	}
 
 	// version 2.X
+	@Test
 	public void testUpgradeFromVersion2X_EmptyDatabase() {
 		SQLiteDatabase db = createDatabaseForVersion(4);
 		DatabaseUpgrader.upgradeDatabase(db);
@@ -40,6 +53,7 @@ public class DatabaseUpgraderTest extends TestCase {
 		db.close();
 	}
 
+	@Test
 	public void testUpgradeFromVersion2X_Vehicles() {
 		SQLiteDatabase db = createDatabaseForVersion(4);
 		verifyVehicles(db);
