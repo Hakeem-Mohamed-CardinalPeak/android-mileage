@@ -11,8 +11,9 @@ import android.net.Uri;
 import au.com.bytecode.opencsv.CSVWriter;
 
 import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.text.DateFormat;
 import java.util.Date;
 
@@ -26,7 +27,9 @@ public class CsvExportActivity extends BaseExportActivity {
         @Override
         public String performExport(String inputFile, String outputFile) {
             try {
-                BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));
+                Uri outputUri = Uri.parse(outputFile);
+                OutputStream os = mActivity.getContentResolver().openOutputStream(outputUri);
+                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(os));
                 CSVWriter csvWriter = new CSVWriter(writer);
 
                 // TODO(3.5) - export more than just fillup data

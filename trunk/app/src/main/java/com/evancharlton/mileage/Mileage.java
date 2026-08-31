@@ -1,13 +1,19 @@
 
 package com.evancharlton.mileage;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.inputmethod.InputMethodManager;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
@@ -27,11 +33,16 @@ public class Mileage extends BaseActivity implements FillupFragment.OnFillupSave
 
     private BottomNavigationView mBottomNavigation;
 
+    private final ActivityResultLauncher<String> mNotificationPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), granted -> {
+            });
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         initToolbar();
+        requestNotificationPermissionIfNeeded();
 
         FragmentManager fm = getSupportFragmentManager();
         if (savedInstanceState == null) {
@@ -71,6 +82,14 @@ public class Mileage extends BaseActivity implements FillupFragment.OnFillupSave
             }
             return true;
         });
+    }
+
+    private void requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                && ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                        != PackageManager.PERMISSION_GRANTED) {
+            mNotificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
+        }
     }
 
     private void switchTo(Fragment target) {

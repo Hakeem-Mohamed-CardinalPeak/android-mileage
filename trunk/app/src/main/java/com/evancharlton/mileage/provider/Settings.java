@@ -1,8 +1,6 @@
 
 package com.evancharlton.mileage.provider;
 
-import android.os.Environment;
-
 public final class Settings {
     public static final String NAME = "com.evancharlton.mileage_preferences";
 
@@ -20,9 +18,6 @@ public final class Settings {
     public static final String META_FIELD = "meta_field";
 
     public static final String AUTO_BACKUPS = "auto_backup";
-
-    public static final String EXTERNAL_DIR = Environment.getExternalStorageDirectory()
-            + "/mileage/";
 
     public static final class DataFormats {
         // These *must* be kept in sync with @arrays/data_formats !

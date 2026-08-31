@@ -2,7 +2,6 @@
 package com.evancharlton.mileage.services;
 
 import com.evancharlton.mileage.provider.FillUpsProvider;
-import com.evancharlton.mileage.util.Util;
 
 import android.annotation.TargetApi;
 import android.app.IntentService;
@@ -46,7 +45,8 @@ public class AutomaticBackupService extends IntentService {
 
         if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
             File src = getDatabasePath(FillUpsProvider.DATABASE_NAME);
-            File dest = new File(Util.getExternalFolder(), "mileage-backup.db");
+            // app-specific external storage: no permission required, unaffected by scoped storage
+            File dest = new File(getExternalFilesDir(null), "mileage-backup.db");
 
             FileChannel source = null;
             FileChannel destination = null;

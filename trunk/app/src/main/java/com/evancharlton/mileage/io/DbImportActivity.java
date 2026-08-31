@@ -6,11 +6,14 @@ import com.evancharlton.mileage.ImportActivity;
 import com.evancharlton.mileage.R;
 import com.evancharlton.mileage.tasks.DbImportTask;
 
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+
+import androidx.core.content.IntentCompat;
 
 public class DbImportActivity extends BaseActivity {
     private DbImportTask mTask;
@@ -34,7 +37,8 @@ public class DbImportActivity extends BaseActivity {
         mTask = (DbImportTask) getLastNonConfigurationInstance();
 
         if (mTask == null) {
-            mTask = new DbImportTask(getIntent().getStringExtra(ImportActivity.FILENAME));
+            Uri uri = IntentCompat.getParcelableExtra(getIntent(), ImportActivity.FILE_URI, Uri.class);
+            mTask = new DbImportTask(uri);
         }
         mTask.attach(this);
 

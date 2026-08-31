@@ -9,6 +9,7 @@ import com.evancharlton.mileage.io.importers.CsvWizardActivity;
 import com.evancharlton.mileage.tasks.CsvDateReaderTask;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -16,6 +17,8 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Spinner;
 import android.widget.TextView;
+
+import androidx.core.content.IntentCompat;
 
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -77,7 +80,8 @@ public class CsvDateFormatActivity extends CsvWizardActivity {
         }
         mDateReaderTask.attach(this);
         if (mDateReaderTask.getStatus() == AsyncTask.Status.PENDING) {
-            mDateReaderTask.execute(getIntent().getStringExtra(ImportActivity.FILENAME));
+            Uri uri = IntentCompat.getParcelableExtra(getIntent(), ImportActivity.FILE_URI, Uri.class);
+            mDateReaderTask.execute(uri.toString());
         }
     }
 

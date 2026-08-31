@@ -5,8 +5,8 @@
 	android:installLocation="auto"
 >
 	<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 	<uses-permission android:name="android.permission.VIBRATE"/>
+	<uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 	<supports-screens
 		android:largeScreens="true"
 		android:normalScreens="true"
@@ -14,7 +14,7 @@
 		android:anyDensity="true"
 	/>
 	<application android:label="@string/app_name" android:icon="@drawable/icon" android:theme="@style/AppTheme">
-		<provider android:name=".provider.FillUpsProvider" android:authorities="com.evancharlton.mileage" />
+		<provider android:name=".provider.FillUpsProvider" android:authorities="com.evancharlton.mileage" android:exported="false" />
 
 		<activity android:name=".Mileage" android:exported="true">
 			<intent-filter>
@@ -69,9 +69,9 @@
 		<activity android:name=".charts.EastChart" android:label="@string/title_chart_east" />
 		<activity android:name=".charts.WestChart" android:label="@string/title_chart_west" />
 
-		<service android:name=".services.RecalculateEconomyService" />
+		<service android:name=".services.RecalculateEconomyService" android:exported="false" />
 
-		<service android:name=".services.AutomaticBackupService" />
+		<service android:name=".services.AutomaticBackupService" android:exported="false" />
 
 		<receiver android:name=".receivers.MediaChangedReceiver" android:exported="true">
 		    <intent-filter>
@@ -80,6 +80,6 @@
 		    </intent-filter>
 		</receiver>
 
-		<receiver android:name=".alarms.IntervalReceiver" />
+		<receiver android:name=".alarms.IntervalReceiver" android:exported="false" />
 	</application>
 </manifest> 

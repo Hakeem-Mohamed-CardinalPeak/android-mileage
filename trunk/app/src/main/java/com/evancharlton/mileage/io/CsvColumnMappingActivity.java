@@ -8,6 +8,7 @@ import com.evancharlton.mileage.io.importers.CsvWizardActivity;
 import com.evancharlton.mileage.tasks.CsvColumnReaderTask;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -15,6 +16,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Spinner;
 import android.widget.TextView;
+
+import androidx.core.content.IntentCompat;
 
 import java.util.ArrayList;
 
@@ -44,7 +47,8 @@ public class CsvColumnMappingActivity extends CsvWizardActivity {
         }
         mColumnReaderTask.attach(this);
         if (mColumnReaderTask.getStatus() == AsyncTask.Status.PENDING) {
-            mColumnReaderTask.execute(getIntent().getStringExtra(ImportActivity.FILENAME));
+            Uri uri = IntentCompat.getParcelableExtra(getIntent(), ImportActivity.FILE_URI, Uri.class);
+            mColumnReaderTask.execute(uri.toString());
         }
     }
 

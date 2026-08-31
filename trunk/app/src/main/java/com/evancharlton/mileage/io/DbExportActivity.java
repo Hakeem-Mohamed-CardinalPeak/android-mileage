@@ -1,10 +1,12 @@
 
 package com.evancharlton.mileage.io;
 
+import android.net.Uri;
+
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.channels.FileChannel;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 public class DbExportActivity extends BaseExportActivity {
     @Override
@@ -15,12 +17,14 @@ public class DbExportActivity extends BaseExportActivity {
     private static final class DbExportTask extends ExportTask {
         @Override
         public String performExport(String inputFile, String outputFile) {
-            try {
-                FileChannel input = new FileInputStream(inputFile).getChannel();
-                FileChannel output = new FileOutputStream(outputFile).getChannel();
-                input.transferTo(0, input.size(), output);
-                input.close();
-                output.close();
+            Uri uri = Uri.parse(outputFile);
+            try (InputStream in = new FileInputStream(inputFile);
+                    OutputStream out = mActivity.getContentResolver().openOutputStream(uri)) {
+                byte[] buffer = new byte[8192];
+                int read;
+                while ((read = in.read(buffer)) != -1) {
+                    out.write(buffer, 0, read);
+                }
                 return outputFile;
             } catch (IOException e) {
             }

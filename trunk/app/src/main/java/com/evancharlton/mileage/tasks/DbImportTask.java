@@ -5,7 +5,6 @@ import com.evancharlton.mileage.R;
 import com.evancharlton.mileage.io.DbImportActivity;
 import com.evancharlton.mileage.provider.DatabaseUpgrader;
 import com.evancharlton.mileage.provider.FillUpsProvider;
-import com.evancharlton.mileage.provider.Settings;
 
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
@@ -15,17 +14,24 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.channels.FileChannel;
 
 public class DbImportTask extends AttachableAsyncTask<DbImportActivity, Void, String, Boolean> {
     private static final String TAG = "DbImportTask";
 
-    private static final String TEMP_FILE = Settings.EXTERNAL_DIR + ".import.db";
+    private final Uri mInput;
 
-    private final String mInput;
+    private File mTempFile;
 
-    public DbImportTask(String input) {
+    public DbImportTask(Uri input) {
         mInput = input;
+    }
+
+    @Override
+    public void attach(DbImportActivity activity) {
+        super.attach(activity);
+        mTempFile = new File(activity.getCacheDir(), "import.db");
     }
 
     @Override
@@ -63,33 +69,36 @@ public class DbImportTask extends AttachableAsyncTask<DbImportActivity, Void, St
     }
 
     private void makeBackup() throws IOException {
-        FileChannel input = new FileInputStream(Settings.EXTERNAL_DIR + mInput).getChannel();
-        FileChannel output = new FileOutputStream(TEMP_FILE).getChannel();
-        input.transferTo(0, input.size(), output);
-        input.close();
-        output.close();
+        try (InputStream in = getParent().getContentResolver().openInputStream(mInput);
+                FileOutputStream out = new FileOutputStream(mTempFile)) {
+            byte[] buffer = new byte[8192];
+            int read;
+            while ((read = in.read(buffer)) != -1) {
+                out.write(buffer, 0, read);
+            }
+        }
     }
 
     private void upgradeDatabase() {
-        Log.d(TAG, "Upgrading " + TEMP_FILE);
+        Log.d(TAG, "Upgrading " + mTempFile.getAbsolutePath());
         SQLiteDatabase db =
-                SQLiteDatabase.openDatabase(TEMP_FILE, null, SQLiteDatabase.OPEN_READWRITE);
+                SQLiteDatabase.openDatabase(mTempFile.getAbsolutePath(), null,
+                        SQLiteDatabase.OPEN_READWRITE);
         DatabaseUpgrader.upgradeDatabase(db);
         db.close();
     }
 
     private void cleanUp() throws IOException {
         File database = getParent().getDatabasePath(FillUpsProvider.DATABASE_NAME);
-        FileChannel input = new FileInputStream(TEMP_FILE).getChannel();
+        FileChannel input = new FileInputStream(mTempFile).getChannel();
         FileChannel output = new FileOutputStream(database).getChannel();
         long bytes = input.transferTo(0, input.size(), output);
         input.close();
         output.close();
         Log.d(TAG, "Wrote " + bytes + " bytes to " + database.getAbsolutePath() + " from "
-                + TEMP_FILE);
+                + mTempFile.getAbsolutePath());
 
-        File tempDatabase = new File(TEMP_FILE);
-        tempDatabase.delete();
+        mTempFile.delete();
 
         getParent().getContentResolver().getType(
                 Uri.withAppendedPath(FillUpsProvider.BASE_URI, "reset"));

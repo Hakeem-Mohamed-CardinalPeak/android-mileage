@@ -423,7 +423,10 @@ public class FillupFragment extends BaseFormFragment {
         }
 
         if (mPreferences.getBoolean(Settings.STORE_LOCATION, false)
-                && mFillup.isExistingObject() == false) {
+                && mFillup.isExistingObject() == false
+                && androidx.core.content.ContextCompat.checkSelfPermission(requireContext(),
+                        android.Manifest.permission.ACCESS_COARSE_LOCATION)
+                        == android.content.pm.PackageManager.PERMISSION_GRANTED) {
             // Don't want to erase location data
             LocationManager locationManager =
                     (LocationManager) requireContext().getSystemService(Context.LOCATION_SERVICE);

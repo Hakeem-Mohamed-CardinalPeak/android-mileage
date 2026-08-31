@@ -11,6 +11,7 @@ import com.evancharlton.mileage.tasks.CsvVehicleReaderTask;
 
 import android.content.Intent;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -18,6 +19,8 @@ import android.view.View;
 import android.widget.SimpleAdapter;
 import android.widget.Spinner;
 import android.widget.TextView;
+
+import androidx.core.content.IntentCompat;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -84,7 +87,8 @@ public class CsvVehicleMappingActivity extends CsvWizardActivity {
         }
         mVehicleReaderTask.attach(this);
         if (mVehicleReaderTask.getStatus() == AsyncTask.Status.PENDING) {
-            mVehicleReaderTask.execute(getIntent().getStringExtra(ImportActivity.FILENAME));
+            Uri uri = IntentCompat.getParcelableExtra(getIntent(), ImportActivity.FILE_URI, Uri.class);
+            mVehicleReaderTask.execute(uri.toString());
         }
     }
 

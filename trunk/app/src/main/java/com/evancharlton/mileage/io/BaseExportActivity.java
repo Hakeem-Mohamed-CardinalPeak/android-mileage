@@ -5,12 +5,16 @@ import com.evancharlton.mileage.BaseActivity;
 import com.evancharlton.mileage.ExportActivity;
 import com.evancharlton.mileage.R;
 import com.evancharlton.mileage.provider.FillUpsProvider;
-import com.evancharlton.mileage.provider.Settings;
 
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.provider.OpenableColumns;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+
+import androidx.core.content.IntentCompat;
 
 public abstract class BaseExportActivity extends BaseActivity {
     private ProgressBar mProgressBar;
@@ -19,6 +23,8 @@ public abstract class BaseExportActivity extends BaseActivity {
 
     private ExportTask mExportTask;
 
+    private String mDisplayName;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -26,8 +32,17 @@ public abstract class BaseExportActivity extends BaseActivity {
         setContentView(R.layout.export_progress);
         initToolbar();
 
-        final String filename = getIntent().getStringExtra(ExportActivity.FILENAME);
-        setTitle(getString(R.string.exporting, filename));
+        final Uri uri = IntentCompat.getParcelableExtra(getIntent(), ExportActivity.FILE_URI, Uri.class);
+        mDisplayName = uri.getLastPathSegment();
+        try (Cursor c = getContentResolver().query(uri, null, null, null, null)) {
+            if (c != null && c.moveToFirst()) {
+                int idx = c.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                if (idx >= 0) {
+                    mDisplayName = c.getString(idx);
+                }
+            }
+        }
+        setTitle(getString(R.string.exporting, mDisplayName));
 
         mProgressBar = (ProgressBar) findViewById(R.id.progress);
         mLog = (TextView) findViewById(R.id.log);
@@ -42,7 +57,7 @@ public abstract class BaseExportActivity extends BaseActivity {
 
         if (mExportTask.getStatus() == AsyncTask.Status.PENDING) {
             String dbPath = getDatabasePath(FillUpsProvider.DATABASE_NAME).getAbsolutePath();
-            mExportTask.execute(dbPath, filename);
+            mExportTask.execute(dbPath, uri.toString());
         }
     }
 
@@ -86,7 +101,7 @@ public abstract class BaseExportActivity extends BaseActivity {
         protected final String doInBackground(String... params) {
             final String inputFile = params[0];
             final String outputFile = params[1];
-            return performExport(inputFile, Settings.EXTERNAL_DIR + outputFile.trim());
+            return performExport(inputFile, outputFile);
         }
 
         @Override
@@ -98,9 +113,7 @@ public abstract class BaseExportActivity extends BaseActivity {
         protected final void onPostExecute(String result) {
             final String msg;
             if (result != null) {
-                msg =
-                        mActivity.getString(R.string.exported,
-                                result.substring(result.lastIndexOf('/') + 1));
+                msg = mActivity.getString(R.string.exported, mActivity.mDisplayName);
             } else {
                 msg = mActivity.getString(R.string.export_error);
             }

@@ -7,19 +7,22 @@ import com.evancharlton.mileage.dao.Fillup;
 import com.evancharlton.mileage.exceptions.InvalidFieldException;
 import com.evancharlton.mileage.io.CsvDateFormatActivity;
 import com.evancharlton.mileage.io.CsvImportActivity;
-import com.evancharlton.mileage.provider.Settings;
 import com.evancharlton.mileage.provider.tables.CacheTable;
 import com.evancharlton.mileage.provider.tables.FillupsTable;
 
 import android.content.ContentValues;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
+
+import androidx.core.os.BundleCompat;
 
 import au.com.bytecode.opencsv.CSVReader;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -43,12 +46,12 @@ public class CsvImportTask extends AttachableAsyncTask<CsvImportActivity, Bundle
         getParent().getContentResolver().delete(CacheTable.BASE_URI, null, null);
         publishProgress(0, R.string.update_erased_cache);
 
-        String base = args.getString(ImportActivity.FILENAME);
-        String filename = Settings.EXTERNAL_DIR + base;
+        Uri uri = BundleCompat.getParcelable(args, ImportActivity.FILE_URI, Uri.class);
         CSVReader csvReader = null;
         int i = 0;
         try {
-            BufferedReader reader = new BufferedReader(new FileReader(filename));
+            InputStream is = getParent().getContentResolver().openInputStream(uri);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(is));
             csvReader = new CSVReader(reader);
 
             // skip the row of headers

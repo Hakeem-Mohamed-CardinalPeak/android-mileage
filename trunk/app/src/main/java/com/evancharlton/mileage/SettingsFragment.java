@@ -5,6 +5,7 @@ import com.evancharlton.mileage.dao.Field;
 import com.evancharlton.mileage.provider.Settings;
 import com.evancharlton.mileage.provider.tables.FieldsTable;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -19,12 +20,14 @@ import android.os.Bundle;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.core.content.ContextCompat;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
 public class SettingsFragment extends PreferenceFragmentCompat implements
         Preference.OnPreferenceClickListener {
     private ActivityResultLauncher<Intent> mRingtonePickerLauncher;
+    private ActivityResultLauncher<String> mLocationPermissionLauncher;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -40,6 +43,9 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
                                 uri == null ? "" : uri.toString());
                         editor.commit();
                     }
+                });
+        mLocationPermissionLauncher = registerForActivityResult(
+                new ActivityResultContracts.RequestPermission(), granted -> {
                 });
     }
 
@@ -67,6 +73,16 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
 
         findPreference("units").setOnPreferenceClickListener(this);
         // findPreference(Settings.META_FIELD).setOnPreferenceClickListener(this);
+
+        findPreference(Settings.STORE_LOCATION).setOnPreferenceChangeListener(
+                (preference, newValue) -> {
+                    if (Boolean.TRUE.equals(newValue) && ContextCompat.checkSelfPermission(
+                            requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION)
+                            != PackageManager.PERMISSION_GRANTED) {
+                        mLocationPermissionLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION);
+                    }
+                    return true;
+                });
 
         Preference ringtone = findPreference(Settings.NOTIFICATIONS_RINGTONE);
         ringtone.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {

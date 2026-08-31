@@ -3,26 +3,27 @@ package com.evancharlton.mileage;
 
 import com.evancharlton.mileage.io.CsvExportActivity;
 import com.evancharlton.mileage.io.DbExportActivity;
-import com.evancharlton.mileage.provider.Settings;
 
 import android.content.Intent;
-import android.os.AsyncTask;
+import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.Spinner;
-import android.widget.TextView;
 
-import java.io.File;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 
 public class ExportActivity extends BaseActivity {
-    public static final String FILENAME = "filename";
+    public static final String FILE_URI = "file_uri";
+
+    private static final String BASE_NAME = "mileage-export";
 
     private static final String[] FILE_TYPES = new String[] {
             ".db", ".csv"
+    };
+
+    private static final String[] MIME_TYPES = new String[] {
+            "application/octet-stream", "text/csv"
     };
 
     @SuppressWarnings("rawtypes")
@@ -32,13 +33,9 @@ public class ExportActivity extends BaseActivity {
 
     private Spinner mFileTypes;
 
-    private EditText mFilename;
+    private ActivityResultLauncher<String> mDbPicker;
 
-    private Button mSubmitButton;
-
-    private TextView mFileExt;
-
-    private FilenameTask mFilenameTask;
+    private ActivityResultLauncher<String> mCsvPicker;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,112 +44,37 @@ public class ExportActivity extends BaseActivity {
         setContentView(R.layout.export_form);
         initToolbar();
 
+        mDbPicker = registerForActivityResult(
+                new ActivityResultContracts.CreateDocument(MIME_TYPES[0]),
+                uri -> launchExporter(0, uri));
+        mCsvPicker = registerForActivityResult(
+                new ActivityResultContracts.CreateDocument(MIME_TYPES[1]),
+                uri -> launchExporter(1, uri));
+
         mFileTypes = (Spinner) findViewById(R.id.exporter);
-        mFilename = (EditText) findViewById(R.id.output_file);
-        mFileExt = (TextView) findViewById(R.id.file_extension);
-        mSubmitButton = (Button) findViewById(R.id.submit);
-        mSubmitButton.setOnClickListener(new View.OnClickListener() {
+
+        findViewById(R.id.submit).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent =
-                        new Intent(ExportActivity.this, EXPORTERS[mFileTypes
-                                .getSelectedItemPosition()]);
-                intent.putExtra(ExportActivity.FILENAME, getFilename());
-                startActivity(intent);
-                finish();
+                int position = mFileTypes.getSelectedItemPosition();
+                String suggestedName = BASE_NAME + FILE_TYPES[position];
+                if (position == 0) {
+                    mDbPicker.launch(suggestedName);
+                } else {
+                    mCsvPicker.launch(suggestedName);
+                }
             }
         });
-
-        mFileTypes.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
-                mFileExt.setText(getExtension());
-                startFilenameTask(true);
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> arg0) {
-            }
-        });
-
-        mFilenameTask = (FilenameTask) getLastCustomNonConfigurationInstance();
-        startFilenameTask(false);
     }
 
-    private void startFilenameTask(boolean cancel) {
-        if (cancel && mFilenameTask != null) {
-            mFilenameTask.cancel(true);
-            mFilenameTask = null;
+    private void launchExporter(int position, Uri uri) {
+        if (uri == null) {
+            // user cancelled the picker
+            return;
         }
-        if (mFilenameTask == null) {
-            mFilenameTask = new FilenameTask();
-        }
-        mFilenameTask.attach(this);
-        if (mFilenameTask.getStatus() == AsyncTask.Status.PENDING) {
-            mFilenameTask.execute();
-        }
-    }
-
-    @Override
-    public Object onRetainCustomNonConfigurationInstance() {
-        return mFilenameTask;
-    }
-
-    private final String getExtension() {
-        return FILE_TYPES[mFileTypes.getSelectedItemPosition()];
-    }
-
-    private String getFilename() {
-        return mFilename.getText() + getExtension();
-    }
-
-    protected static final class FilenameTask extends AsyncTask<Void, Void, String> {
-        private static final String TAG = "FilenameTask";
-
-        private static final String BASE_NAME = "mileage-export";
-
-        private ExportActivity mActivity;
-
-        public void attach(ExportActivity activity) {
-            mActivity = activity;
-        }
-
-        @Override
-        protected String doInBackground(Void... args) {
-            // Make sure that we have somewhere to put the file
-            File destDir = new File(Settings.EXTERNAL_DIR);
-            if (!destDir.exists()) {
-                Log.d(TAG, "Creating export destination");
-                destDir.mkdirs();
-            }
-
-            int i = 0;
-            while (true) {
-                if (isCancelled()) {
-                    return null;
-                }
-                String abs = getAbsoluteFilename(i);
-                if (new File(abs).exists() == false) {
-                    return getBasename(i);
-                }
-                i++;
-            }
-        }
-
-        private String getAbsoluteFilename(int i) {
-            return Settings.EXTERNAL_DIR + getBasename(i) + mActivity.getExtension();
-        }
-
-        private String getBasename(int i) {
-            return BASE_NAME + (i > 0 ? "." + i : "");
-        }
-
-        @Override
-        protected void onPostExecute(String filename) {
-            if (filename == null) {
-                return;
-            }
-            mActivity.mFilename.setText(filename);
-        }
+        Intent intent = new Intent(this, EXPORTERS[position]);
+        intent.putExtra(FILE_URI, uri);
+        startActivity(intent);
+        finish();
     }
 }
