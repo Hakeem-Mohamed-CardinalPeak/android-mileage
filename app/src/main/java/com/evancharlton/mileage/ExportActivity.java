@@ -53,7 +53,9 @@ public class ExportActivity extends BaseActivity {
 
         mFileTypes = (Spinner) findViewById(R.id.exporter);
 
-        findViewById(R.id.submit).setOnClickListener(new View.OnClickListener() {
+        View submit = findViewById(R.id.submit);
+        applyBottomInset(submit);
+        submit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 int position = mFileTypes.getSelectedItemPosition();

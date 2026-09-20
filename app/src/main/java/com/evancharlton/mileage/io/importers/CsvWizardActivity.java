@@ -30,6 +30,8 @@ public abstract class CsvWizardActivity extends BaseActivity implements View.OnC
 
         mContainer = (LinearLayout) findViewById(R.id.container);
 
+        applyBottomInset(findViewById(R.id.button_bar));
+
         mNextButton = (Button) findViewById(R.id.next);
         mNextButton.setOnClickListener(this);
         mPrevButton = (Button) findViewById(R.id.previous);

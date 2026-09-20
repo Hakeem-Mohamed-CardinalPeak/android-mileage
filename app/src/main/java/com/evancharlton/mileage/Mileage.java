@@ -69,6 +69,7 @@ public class Mileage extends BaseActivity implements FillupFragment.OnFillupSave
         mActiveFragment = mFillupFragment;
 
         mBottomNavigation = findViewById(R.id.bottom_navigation);
+        applyBottomInset(mBottomNavigation);
         mBottomNavigation.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
             if (id == R.id.menu_tab_fillup) {

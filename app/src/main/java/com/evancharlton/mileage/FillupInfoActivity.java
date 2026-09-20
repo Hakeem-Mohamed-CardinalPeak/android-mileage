@@ -78,7 +78,9 @@ public class FillupInfoActivity extends BaseActivity implements View.OnClickList
 
         next.setOnClickListener(this);
         previous.setOnClickListener(this);
-        findViewById(R.id.edit).setOnClickListener(this);
+        View edit = findViewById(R.id.edit);
+        applyBottomInset(edit);
+        edit.setOnClickListener(this);
 
         mStatContainer = (LinearLayout) findViewById(R.id.stat_container);
 

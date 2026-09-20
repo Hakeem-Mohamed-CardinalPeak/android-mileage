@@ -46,6 +46,7 @@ public abstract class BaseFormFragment extends Fragment {
         View root = inflater.inflate(R.layout.base_form_fragment, container, false);
         LinearLayout stub = root.findViewById(R.id.contents);
         LayoutInflater.from(requireContext()).inflate(getContentLayoutResId(), stub);
+        BaseActivity.applyBottomInset(root.findViewById(R.id.save_btn));
         return root;
     }
 
