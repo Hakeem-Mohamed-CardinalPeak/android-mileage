@@ -59,7 +59,9 @@ public class ImportActivity extends BaseActivity {
             }
         });
 
-        findViewById(R.id.submit).setOnClickListener(new View.OnClickListener() {
+        View submit = findViewById(R.id.submit);
+        applyBottomInset(submit);
+        submit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 mFilePicker.launch(new String[] {

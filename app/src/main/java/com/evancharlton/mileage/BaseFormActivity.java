@@ -35,6 +35,7 @@ public abstract class BaseFormActivity extends BaseActivity {
         LinearLayout stub = (LinearLayout) findViewById(R.id.contents);
         LayoutInflater.from(this).inflate(layoutResId, stub);
         initToolbar();
+        applyBottomInset(findViewById(R.id.save_btn));
         mPreferences = getSharedPreferences(Settings.NAME, MODE_PRIVATE);
     }
 
